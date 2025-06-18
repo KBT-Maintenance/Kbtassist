@@ -4,8 +4,8 @@ import type { AuthOptions } from "next-auth"
 import GoogleProvider from "next-auth/providers/google"
 import CredentialsProvider from "next-auth/providers/credentials"
 import { createClient } from "@/lib/supabase/server"
-import { cookies } from "next/headers"
 import { UserRole } from "@prisma/client"
+import { prisma } from "@/lib/db"
 
 export const authOptions: AuthOptions = {
   providers: [
@@ -20,7 +20,7 @@ export const authOptions: AuthOptions = {
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        const supabase = createClient(cookies())
+        const supabase = createClient()
         const { data, error } = await supabase.auth.signInWithPassword({
           email: credentials?.email as string,
           password: credentials?.password as string,
@@ -33,22 +33,16 @@ export const authOptions: AuthOptions = {
 
         if (data.user) {
           // Fetch user role from your public.users table
-          const { data: userProfile, error: profileError } = await supabase
-            .from("users")
-            .select("role, name")
-            .eq("id", data.user.id)
-            .single()
-
-          if (profileError) {
-            console.error("Error fetching user profile:", profileError)
-            return null
-          }
+          const userProfile = await prisma.user.findUnique({
+            where: { id: data.user.id },
+            select: { role: true, name: true },
+          })
 
           return {
             id: data.user.id,
             email: data.user.email,
-            name: userProfile?.name || data.user.email, // Use name from profile or email
-            role: userProfile?.role || UserRole.TENANT, // Default role if not found
+            name: userProfile?.name || data.user.email,
+            role: userProfile?.role || UserRole.TENANT,
           }
         }
         return null
@@ -61,22 +55,20 @@ export const authOptions: AuthOptions = {
   }),
   callbacks: {
     async session({ session, user }) {
-      const supabase = createClient(cookies())
-      const { data: userProfile, error } = await supabase.from("users").select("role, name").eq("id", user.id).single()
-
-      if (error) {
-        console.error("Error fetching user profile in session callback:", error)
-      }
+      const userProfile = await prisma.user.findUnique({
+        where: { id: user.id },
+        select: { role: true, name: true },
+      })
 
       session.user.id = user.id
-      session.user.role = userProfile?.role || UserRole.TENANT // Ensure role is always set
-      session.user.name = userProfile?.name || user.name || user.email // Ensure name is set
+      session.user.role = userProfile?.role || UserRole.TENANT
+      session.user.name = userProfile?.name || user.name || user.email
       return session
     },
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id
-        token.role = (user as any).role // Cast to any to access custom role property
+        token.role = (user as any).role
       }
       return token
     },
@@ -86,7 +78,7 @@ export const authOptions: AuthOptions = {
   },
   pages: {
     signIn: "/login",
-    error: "/login", // Redirect to login page on error
+    error: "/login",
   },
   secret: process.env.NEXTAUTH_SECRET,
 }

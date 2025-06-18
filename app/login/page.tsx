@@ -1,88 +1,77 @@
 "use client"
 
-import { useState, type FormEvent } from "react"
 import Link from "next/link"
-import { Loader2Icon } from "lucide-react"
 
-import { Card, CardHeader, CardContent, CardTitle, CardDescription } from "@/components/ui/card"
+import type React from "react"
+
+import { useState } from "react"
+import { signIn } from "next-auth/react"
+import { useRouter } from "next/navigation"
+import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Button } from "@/components/ui/button"
-import { useAuth } from "@/components/auth/auth-provider"
 
 export default function LoginPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
-  const { signIn, loading } = useAuth()
+  const [error, setError] = useState<string | null>(null)
+  const router = useRouter()
 
-  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    await signIn(email, password)
+    setError(null)
+
+    const result = await signIn("credentials", {
+      redirect: false,
+      email,
+      password,
+    })
+
+    if (result?.error) {
+      setError(result.error)
+    } else {
+      router.push("/dashboard") // Redirect to dashboard on successful login
+    }
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-gray-100 px-4 dark:bg-gray-900">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <CardTitle className="text-3xl font-bold">Login to KBT Assist</CardTitle>
-          <CardDescription>Enter your credentials to access your dashboard.</CardDescription>
-        </CardHeader>
-
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="m@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                disabled={loading}
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                disabled={loading}
-              />
-            </div>
-
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? (
-                <>
-                  <Loader2Icon className="mr-2 h-4 w-4 animate-spin" />
-                  {"Logging In…"}
-                </>
-              ) : (
-                "Login"
-              )}
-            </Button>
-          </form>
-
-          <div className="mt-4 text-center text-sm">
-            {"Don’t have an account? "}
-            <Link href="/sign-up" className="underline">
-              Sign Up
-            </Link>
+    <div className="flex items-center justify-center min-h-[calc(100vh-64px)] p-4">
+      <div className="w-full max-w-md space-y-6">
+        <h2 className="text-3xl font-bold text-center">Login</h2>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <Label htmlFor="email">Email</Label>
+            <Input
+              id="email"
+              type="email"
+              placeholder="m@example.com"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
           </div>
-
-          <div className="mt-2 text-center text-xs text-muted-foreground">
-            <p>Demo Accounts:</p>
-            <p>Agent: agent@kbt.com / password</p>
-            <p>Landlord: landlord@kbt.com / password</p>
-            <p>Tenant: tenant@kbt.com / password</p>
-            <p>Contractor: contractor@kbt.com / password</p>
+          <div>
+            <Label htmlFor="password">Password</Label>
+            <Input
+              id="password"
+              type="password"
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
           </div>
-        </CardContent>
-      </Card>
-    </main>
+          {error && <p className="text-red-500 text-sm">{error}</p>}
+          <Button type="submit" className="w-full">
+            Sign In
+          </Button>
+        </form>
+        <p className="text-center text-sm text-muted-foreground">
+          Don&apos;t have an account?{" "}
+          <Link href="/sign-up" className="underline">
+            Sign Up
+          </Link>
+        </p>
+      </div>
+    </div>
   )
 }

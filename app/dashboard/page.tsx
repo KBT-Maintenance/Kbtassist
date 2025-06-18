@@ -27,8 +27,17 @@ import {
   StoreIcon,
   Loader2Icon,
 } from "lucide-react"
+import { getServerSession } from "next-auth"
+import authOptions from "@/auth"
+import { signOut } from "next-auth/react" // Import signOut from next-auth/react
 
 export default async function DashboardPage() {
+  const session = await getServerSession(authOptions)
+
+  if (!session) {
+    redirect("/login")
+  }
+
   const supabase = getServerSupabaseClient(cookies())
   const {
     data: { user },
@@ -137,6 +146,22 @@ export default async function DashboardPage() {
         </div>
       }
     >
+      <div className="flex flex-col items-center justify-center min-h-[calc(100vh-64px)] p-4 text-center">
+        <h2 className="text-4xl font-bold mb-4">Dashboard</h2>
+        <p className="text-lg text-muted-foreground mb-8">
+          Welcome to your dashboard, {session.user?.name || session.user?.email}!
+        </p>
+        <form
+          action={async () => {
+            "use server"
+            await signOut({ redirectTo: "/login" })
+          }}
+        >
+          <Button type="submit" variant="destructive">
+            Sign Out
+          </Button>
+        </form>
+      </div>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <MetricCard title="Reported issues to do" value={reportedIssuesToDo} />
         <MetricCard title="Issues requiring attention" value={issuesRequiringAttention} />

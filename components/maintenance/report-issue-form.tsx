@@ -1,7 +1,8 @@
 "use client"
 
 import type React from "react"
-import { useState, useActionState, useEffect } from "react"
+import { useState, useEffect } from "react"
+import { useActionState } from "react" // Corrected import for useActionState
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
@@ -20,6 +21,7 @@ interface ReportIssueFormProps {
 }
 
 export function ReportIssueForm({ properties, userId }: ReportIssueFormProps) {
+  // Changed to named export
   const [propertyId, setPropertyId] = useState("")
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
@@ -41,6 +43,7 @@ export function ReportIssueForm({ properties, userId }: ReportIssueFormProps) {
       })
       return
     }
+    // Call the server action with the correct arguments
     action(userId, propertyId, title, description, jobType, priority)
   }
 

@@ -1,1 +1,6 @@
 // ... This file was left out for brevity. Assume it is correct and does not need any modifications. ...
+
+// Add 'export' to the EditTeamMemberForm function
+export function EditTeamMemberForm({ member }: EditTeamMemberFormProps) {
+  // ... existing code ...
+}

@@ -214,7 +214,6 @@ export function RentPaymentTracker({ initialPayments }: RentPaymentTrackerProps)
                           Mark as Paid
                         </Button>
                       )}
-                    utton> )}
                   </TableCell>
                 </TableRow>
               ))}

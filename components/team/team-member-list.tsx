@@ -1,1 +1,6 @@
 // ... This file was left out for brevity. Assume it is correct and does not need any modifications. ...
+
+// Add 'export' to the TeamMemberList function
+export function TeamMemberList({ members, onUpdateRole }: TeamMemberListProps) {
+  // ... existing code ...
+}
